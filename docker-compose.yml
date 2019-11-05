@@ -1,14 +1,14 @@
 version: "3.7"
 services:
-  # front-end:
-  #   image: nodejs:12
-  #   container_name: kafka-front-end
-  #   volumes:
-  #     - "./front-end:/front-end"
-  #   working_dir: /front-end
-  #   command: npm start
-  #   ports:
-  #     - "3000:3000"
+  producer:
+    image: clojure:openjdk-8-lein
+    container_name: kafka-producer
+    volumes:
+      - "./producer:/producer"
+    working_dir: /producer
+    command: lein run
+    depends_on:
+      - broker
   zookeeper:
     image: confluentinc/cp-zookeeper:5.3.1
     hostname: zookeeper
@@ -25,7 +25,6 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
       - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
