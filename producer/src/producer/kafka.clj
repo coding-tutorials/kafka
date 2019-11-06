@@ -1,7 +1,7 @@
 
 (ns producer.kafka
   (:import [java.util Properties])
-  (:import [org.apache.kafka.clients.producer KafkaProducer ProducerRecord]))
+  (:import [org.apache.kafka.clients.producer KafkaProducer ProducerRecord Callback]))
 
 (def producer
   (KafkaProducer. (doto (Properties.)
@@ -15,11 +15,18 @@
 
 (.initTransactions producer)
 
+(def callback
+  (reify Callback
+    (onCompletion [_  metadata e]
+      (if e
+        (println "error while saving record")
+        (println (str "record saved " (.offset metadata)))))))
+
 (defn send-key-values [topic key-values]
   (doall
     (map
       (fn [[key value]]
-        (.send producer (ProducerRecord. topic key value)))
+        (.send producer (ProducerRecord. topic key value) callback))
       key-values)))
 
 
