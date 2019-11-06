@@ -9,6 +9,15 @@ services:
     command: lein run
     depends_on:
       - broker
+  consumer:
+    image: clojure:openjdk-8-lein
+    container_name: kafka-consumer
+    volumes:
+      - "./consumer:/consumer"
+    working_dir: /consumer
+    command: tail -F leinrun
+    depends_on:
+      - broker
   zookeeper:
     image: confluentinc/cp-zookeeper:5.3.1
     hostname: zookeeper
