@@ -6,9 +6,30 @@
 (def producer
   (KafkaProducer. (doto (Properties.)
                    (.put "bootstrap.servers" "broker:29092")
-                   (.put "client.id" "orders-generator")
+                   (.put "group.id" "kafka-test")
+                   (.put "acks" "all")
+                   (.put "transactional.id" "my-transactional-id")
+                   (.put "enable.idempotence" "true")
                    (.put "key.serializer" "org.apache.kafka.common.serialization.StringSerializer")
                    (.put "value.serializer" "org.apache.kafka.common.serialization.StringSerializer"))))
 
-(defn produce [topic key value]
-  (.get (.send producer (ProducerRecord. topic key value))))
+(.initTransactions producer)
+
+(defn send-key-values [topic key-values]
+  (doall
+    (map
+      (fn [[key value]]
+        (.send producer (ProducerRecord. topic key value)))
+      key-values)))
+
+
+(defn produce [topic key-values]
+  (do (.beginTransaction producer)
+    (let [result (send-key-values topic key-values)]
+      (.commitTransaction producer)
+      result)))
+    
+
+
+(defn close []
+  (.close producer))
